@@ -42,12 +42,45 @@ export default class QuizCreator extends Component {
     event.preventDefault()
   }
 
-  addQuestionHandler = () => {
+  addQuestionHandler = event => {
+    event.preventDefault()
+
+    // создаем локальную копию массива quiz
+    const quiz = this.state.quiz.concat()
+
+    const index = quiz.length + 1
+
+    const {question, option1, option2, option3, option4} = this.state.formControls
+
+    // сформитровать объект каждого из вопросов и положить его в массив quiz
+    const questionItem = {
+      question: question.value,
+      id: index,
+      rightAnswerId: this.state.rightAnswerId,
+      answers: [
+        { text: option1.value, id: option1.id },
+        { text: option2.value, id: option2.id },
+        { text: option3.value, id: option3.id },
+        { text: option4.value, id: option4.id }
+      ]
+    }
+
+    quiz.push(questionItem)
+
+    // страница будет чистая, но в массиве quiz уже будет что-то находиться
+    this.setState({
+      quiz,
+      isFormValid: false,
+      rightAnswerId: 1,
+      formControls: createFormControls()
+    })
 
   }
 
-  createQuizHandler = () => {
-
+  createQuizHandler = event => {
+    event.preventDefault()
+    // console.log(this.state.quiz)
+    // TODO: Server
   }
 
   // сконировать state, проверить валидацию для инпутов и изменить их значение
@@ -131,16 +164,20 @@ export default class QuizCreator extends Component {
 
             { select }
 
+            {/* кнопка будут disabled, если форма не валидная */}
             <Button
               type="primary"
               onClick={this.addQuestionHandler}
+              disabled={!this.state.isFormValid}
             >
               Добавить вопрос
             </Button>
 
+            {/* кнопка будет выключена, если нет вопросов в тесте */}
             <Button
               type="success"
               onClick={this.createQuizHandler}
+              disabled={this.state.quiz === 0}
             >
               Создать тест
             </Button>

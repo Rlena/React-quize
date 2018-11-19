@@ -114,7 +114,6 @@ export default class Auth extends Component {
     Object.keys(formControls).forEach(name => {
       // на каждой итерации переопределяем переменную isFormValid
       isFormValid = formControls[name].valid && isFormValid
-
     })
 
     // изменяем состояние объекта formControls

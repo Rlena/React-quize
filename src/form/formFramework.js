@@ -35,5 +35,19 @@ export function validate(value, validation = null) {
 }
 
 export function validateForm(formControls) {
+  let isFormValid = true
+
+  // пробежать по всему объекту formControls и спросить,
+  // если у нас все контролы этой формы валидные, то форма валидна
+  // в control попадет строковое значение ключа объекта formControls
+  for (let control in formControls) {
+    // hasOwnProperty возвращает логическое знач., указывающее, содержит ли объект указанное свойство
+    // проверяем есть ли в объекте formControls поля, кот. мы прописывали в state
+    if(formControls.hasOwnProperty(control)) {
+      isFormValid = formControls[control].valid && isFormValid
+    }
+  }
+
+  return isFormValid
 
 }
