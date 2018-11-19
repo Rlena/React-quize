@@ -5,6 +5,7 @@ import Input from '../../components/UI/Input/Input'
 import Select from '../../components/UI/Select/Select'
 import { createControl, validate, validateForm } from '../../form/formFramework'
 import Auxiliary from '../../hoc/Auxiliary/Auxiliary'
+import axios from '../../axios/axios-quiz'
 
 function createOptionControl(number) {
   return createControl({
@@ -77,10 +78,29 @@ export default class QuizCreator extends Component {
 
   }
 
-  createQuizHandler = event => {
+  createQuizHandler = async event => {
     event.preventDefault()
     // console.log(this.state.quiz)
-    // TODO: Server
+
+    try {
+      // axios возвращает промис
+      // с помощью await распарсим промис
+      // catch ловит ошибки
+      // базовый url выведен в отдельную директорию axios/axios-quiz
+      await axios.post('/quizes.json', this.state.quiz)
+      // в случае положительного ответа
+
+      this.setState({
+        quiz: [],
+        isFormValid: false,
+        rightAnswerId: 1,
+        formControls: createFormControls()
+      })
+
+    } catch (e) {
+        // в случае ошибки
+        console.log(e)
+    }
   }
 
   // сконировать state, проверить валидацию для инпутов и изменить их значение

@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import './Quiz.css'
 import ActiveQuiz from '../../components/ActiveQuiz/ActiveQuiz'
 import FinishedQuiz from '../../components/FinishedQuiz/FinishedQuiz'
+import axios from '../../axios/axios-quiz'
+import Loader from "../../components/UI/Loader/Loader";
 
 class Quiz extends Component {
   state = {
@@ -9,30 +11,8 @@ class Quiz extends Component {
     isFinished: false,
     activeQuestion: 0,
     answerState: null, // текущий клик пользователя, объект {[id]: 'success' 'error}
-    quiz: [
-      {
-        question: 'Какого цвета небо?',
-        rightAnswerID: 2,
-        id: 1,
-        answers: [
-          { text: 'Черный', id: 1 },
-          { text: 'Синий', id: 2 },
-          { text: 'Красный', id: 3 },
-          { text: 'Зеленый', id: 4 }
-        ]
-      },
-      {
-        question: 'В каком году основали Санкт-Петербург?',
-        rightAnswerID: 3,
-        id: 2,
-        answers: [
-          { text: '1700', id: 1 },
-          { text: '1702', id: 2 },
-          { text: '1703', id: 3 },
-          { text: '1803', id: 4 }
-        ]
-      }
-    ]
+    quiz: [],
+    loading: true
   }
 
   onAnswerClickHandler = answerId => {
@@ -58,7 +38,7 @@ class Quiz extends Component {
     const results = this.state.results
 
     // если правильно ответили на вопрос
-    if (question.rightAnswerID === answerId) {
+    if (question.rightAnswerId === answerId) {
       // если в объекте results уже что-то лежит, а лежать там может только error,
       // т.к. мы могли уже заходить и неправильно ответить на вопрос
       if (!results[question.id]) {
@@ -113,8 +93,19 @@ class Quiz extends Component {
     })
   }
 
-  componentDidMount() {
-    console.log('Quiz Id = ', this.props.match.params.id)
+  async componentDidMount() {
+    // console.log('Quiz Id = ', this.props.match.params.id)
+    try {
+      const response = await axios.get(`/quizes/${this.props.match.params.id}.json`)
+      const quiz = response.data
+
+      this.setState({
+        quiz,
+        loading: false
+      })
+    } catch (e) {
+      console.log(e)
+    }
   }
 
   render() {
@@ -124,7 +115,9 @@ class Quiz extends Component {
           <h1>Ответьте на все вопросы</h1>
 
           {
-            this.state.isFinished
+            this.state.loading
+            ? <Loader />
+            : this.state.isFinished
               ? <FinishedQuiz
                 results={this.state.results}
                 quiz={this.state.quiz} // доступ к вопросам
@@ -139,6 +132,7 @@ class Quiz extends Component {
                 state={this.state.answerState}
               />
           }
+
         </div>
       </div>
     )
