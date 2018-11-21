@@ -2,134 +2,48 @@ import React, { Component } from 'react'
 import './Quiz.css'
 import ActiveQuiz from '../../components/ActiveQuiz/ActiveQuiz'
 import FinishedQuiz from '../../components/FinishedQuiz/FinishedQuiz'
-import axios from '../../axios/axios-quiz'
-import Loader from "../../components/UI/Loader/Loader";
+import Loader from "../../components/UI/Loader/Loader"
+import { connect } from "react-redux"
+import { fetchQuizById, quizAnswerClick, retryQuiz } from "../../store/actions/quiz";
 
 class Quiz extends Component {
-  state = {
-    results: {}, // {[id]: 'success' 'error}
-    isFinished: false,
-    activeQuestion: 0,
-    answerState: null, // текущий клик пользователя, объект {[id]: 'success' 'error}
-    quiz: [],
-    loading: true
-  }
-
-  onAnswerClickHandler = answerId => {
-    // console.log('Answer Id:', answerId)
-
-    // если у нас есть правильный ответ, то мы не будем позволять обрабатывать клики
-    // и будем жадать пока переключится ответ
-    if (this.state.answerState) {
-      // если в answerState уже есть правильный ответ, мы не должны выполнять данную функцию
-      // answerState - объект, с рандомным id, который мы задаем сами
-      // вытаскиваем состояние данного ключа и кладем в нее значение через Object.keys
-      // из this.state.answerState забрать 0 элемент, потому что мы знаем, что в объекте будет только 1 значение
-      const key = Object.keys(this.state.answerState)[0]
-
-      if (this.state.answerState[key] === 'success') {
-        // если правильно ответили на вопрос, в функцию не заходим
-        return
-      }
-    }
-
-    // question - текущий id
-    const question = this.state.quiz[this.state.activeQuestion]
-    const results = this.state.results
-
-    // если правильно ответили на вопрос
-    if (question.rightAnswerId === answerId) {
-      // если в объекте results уже что-то лежит, а лежать там может только error,
-      // т.к. мы могли уже заходить и неправильно ответить на вопрос
-      if (!results[question.id]) {
-        results[question.id] = 'success'
-      }
-
-      this.setState({
-        answerState: { [answerId]: 'success' },
-        results
-      })
-
-      const timeout = window.setTimeout(() => {
-        // если голосование окончено
-        if (this.isQuizFinished()) {
-          this.setState({
-            isFinished: true
-          })
-        }
-        // иначе переключать на следующий вопрос
-        else {
-          this.setState({
-            activeQuestion: this.state.activeQuestion + 1,
-            answerState: null // если правильно ответили на вопрос обнуляем answerState
-          })
-        }
-        window.clearTimeout(timeout)
-      }, 1000)
-
-    }
-    // если ответили неправильно
-    else {
-      // такой id теперь неправильный
-      results[question.id] = 'error'
-      this.setState({
-        answerState: { [answerId]: 'error' },
-        results: results // можно написать просто results, т.к. ключ и значение совпадают
-      })
-    }
-  }
-
-  isQuizFinished() {
-    return this.state.activeQuestion + 1 === this.state.quiz.length
-  }
-
-  retryHandler = () => {
-    // обнуляем state
-    this.setState({
-      activeQuestion: 0,
-      answerState: null,
-      isFinished: false,
-      results: {}
-    })
-  }
 
   async componentDidMount() {
     // console.log('Quiz Id = ', this.props.match.params.id)
-    try {
-      const response = await axios.get(`/quizes/${this.props.match.params.id}.json`)
-      const quiz = response.data
+    this.props.fetchQuizById(this.props.match.params.id)
+  }
 
-      this.setState({
-        quiz,
-        loading: false
-      })
-    } catch (e) {
-      console.log(e)
-    }
+  // вызывается, когда компонент унитожается
+  // при закрытии компонента с вопросом нужно обнулить state
+  // при выходе со страницы диспатчим новый action type
+  componentWillUnmount() {
+    this.props.retryQuiz()
   }
 
   render() {
+    console.log(this.props)
     return (
       <div className={'Quiz'}>
         <div className={'QuizWrapper'}>
           <h1>Ответьте на все вопросы</h1>
 
           {
-            this.state.loading
+            // идет загрузка или нет параметра props.quiz
+            this.props.loading || !this.props.quiz
             ? <Loader />
-            : this.state.isFinished
+            : this.props.isFinished
               ? <FinishedQuiz
-                results={this.state.results}
-                quiz={this.state.quiz} // доступ к вопросам
-                onRetry={this.retryHandler}
+                results={this.props.results}
+                quiz={this.props.quiz} // доступ к вопросам
+                onRetry={this.props.retryQuiz}
               />
               : <ActiveQuiz
-                answers={this.state.quiz[this.state.activeQuestion].answers}
-                question={this.state.quiz[this.state.activeQuestion].question}
-                onAnswerClick={this.onAnswerClickHandler}
-                quizLength={this.state.quiz.length}
-                answerNumber={this.state.activeQuestion + 1}
-                state={this.state.answerState}
+                answers={this.props.quiz[this.props.activeQuestion].answers}
+                question={this.props.quiz[this.props.activeQuestion].question}
+                onAnswerClick={this.props.quizAnswerClick}
+                quizLength={this.props.quiz.length}
+                answerNumber={this.props.activeQuestion + 1}
+                state={this.props.answerState}
               />
           }
 
@@ -139,4 +53,24 @@ class Quiz extends Component {
   }
 }
 
-export default Quiz
+function mapStateToProps(state) {
+  return {
+    results: state.quiz.results,
+    isFinished: state.quiz.isFinished,
+    activeQuestion: state.quiz.activeQuestion,
+    answerState: state.quiz.answerState,
+    quiz: state.quiz.quiz,
+    loading: state.quiz.loading
+  }
+}
+
+// методы для реализации страницы
+function mapDispatchToProps(dispatch) {
+  return {
+    fetchQuizById: id => dispatch(fetchQuizById(id)),
+    quizAnswerClick: answerId => dispatch(quizAnswerClick(answerId)),
+    retryQuiz: () => dispatch(retryQuiz())
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Quiz)

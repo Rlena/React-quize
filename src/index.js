@@ -7,7 +7,7 @@ import * as serviceWorker from './serviceWorker';
 import rootReducer from './store/reducers/rootReducer'
 import { createStore, compose, applyMiddleware } from 'redux' // создание store, compose для redux-devtools
 import { Provider } from 'react-redux' // для поддержки redux в приложении
-import thunk from 'redux-thunk' // для асинхронных actions
+import thunk from 'redux-thunk' // для асинхронного кода в actions
 
 // подключаем возможность использовать redux-devtools (док. redux-devtools, 1.2 Advanced store setup)
 const composeEnhancers =
