@@ -3,9 +3,10 @@ import './Auth.css'
 import Button from '../../components/UI/Button/Button'
 import Input from '../../components/UI/Input/Input'
 import is from 'is_js'
-import axios from 'axios'
+import { connect } from "react-redux"
+import { auth } from "../../store/actions/auth";
 
-export default class Auth extends Component {
+class Auth extends Component {
 
   state = {
     isFormValid: false,
@@ -38,39 +39,23 @@ export default class Auth extends Component {
   }
 
   // в базе нужно активировать способ входа Authentication/Sign-in method
-  loginHandler = async () => {
-    // Sign in with email / password
-    const authData = {
-      email: this.state.formControls.email.value,
-      password: this.state.formControls.password.value,
-      returnSecureToken: true
-    }
-
-    try {
-      const response = await axios.post('https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key=AIzaSyCaaQm6AuGS4nFSCDkJgqyOosYsj0RXm8E', authData)
-      console.log(response.data);
-    } catch (e) {
-      console.log(e)
-    }
+  loginHandler = () => {
+    this.props.auth(
+      this.state.formControls.email.value,
+      this.state.formControls.password.value,
+      true
+    )
   }
 
   // регистрация нового пользователя
   // API_KEY можно взять в сервисе firebase, Authentication
-  reqisterHandler = async () => {
-    // необходимые поля для POST-запроса авторизации
-    // docs Sign up with email / password (Firebase Auth REST API)
-    const authData = {
-      email: this.state.formControls.email.value,
-      password: this.state.formControls.password.value,
-      returnSecureToken: true
-    }
-
-    try {
-      const response = await axios.post('https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key=AIzaSyCaaQm6AuGS4nFSCDkJgqyOosYsj0RXm8E', authData)
-      console.log(response.data);
-    } catch (e) {
-      console.log(e)
-    }
+  reqisterHandler = () => {
+    // вызываем функцию auth с параметрами (определена в mapDispatchToProps)
+    this.props.auth(
+      this.state.formControls.email.value,
+      this.state.formControls.password.value,
+      false
+    )
   }
 
   // отмена стандартного поведения формы
@@ -209,4 +194,15 @@ export default class Auth extends Component {
     )
   }
 }
+
+// функция для авторизации или регистрации в системе
+function mapDispatchToProps(dispatch) {
+  return {
+    // в качестве параметров email, password
+    // и isLogin - кот. будет говорить нужно залогиниться или зарегистрироваться
+    auth: (email, password, isLogin) => dispatch(auth(email, password, isLogin))
+  }
+}
+
+export default connect(null, mapDispatchToProps)(Auth)
 
