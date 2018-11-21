@@ -49,7 +49,7 @@ class Auth extends Component {
 
   // регистрация нового пользователя
   // API_KEY можно взять в сервисе firebase, Authentication
-  reqisterHandler = () => {
+  registerHandler = () => {
     // вызываем функцию auth с параметрами (определена в mapDispatchToProps)
     this.props.auth(
       this.state.formControls.email.value,
@@ -183,7 +183,7 @@ class Auth extends Component {
             </Button>
             <Button
               type="primary"
-              onClick={this.reqisterHandler}
+              onClick={this.registerHandler}
               disabled={!this.state.isFormValid}
             >
               Зарегистрироваться

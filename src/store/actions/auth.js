@@ -35,15 +35,15 @@ export function auth(email, password, isLogin) {
     const expirationData = new Date(new Date().getTime() + data.expiresIn * 1000)
 
     // для поддержания сессии, токен, кот. мы получили от сервера положить в local storage, чтобы иметь к нему доступ
-    localStorage.setItem('token', data.IdToken)
+    localStorage.setItem('token', data.idToken)
 
     // занести локальный id пользователя
     localStorage.setItem('userId', data.localId)
 
     localStorage.setItem('expirationData', expirationData)
 
-    // диспатч нового события с параметром data.IdToken чтобы поддерживать текущую сессию
-    dispatch(authSuccess(data.IdToken))
+    // диспатч нового события с параметром data.idToken чтобы поддерживать текущую сессию
+    dispatch(authSuccess(data.idToken))
 
     // реализация авто логаута т.к. через час сессия завершится
     // делаем новый диспатч autoLogout, передаем параметр expiresIn
@@ -68,6 +68,10 @@ export function logout() {
   return {
     type: AUTH_LOGOUT
   }
+}
+
+export function autoLogin() {
+  
 }
 
 export function authSuccess(token) {
