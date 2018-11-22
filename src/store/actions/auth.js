@@ -32,7 +32,7 @@ export function auth(email, password, isLogin) {
     // такие токены обычно выдаются на час (3600 сек.)
     // поэтому нужно проверять, если час прошел, нужно закончить сессию и получить новый токен, заново авторизоваться
     // получаем текущий тайм-штамп
-    const expirationData = new Date(new Date().getTime() + data.expiresIn * 1000)
+    const expirationDate = new Date(new Date().getTime() + data.expiresIn * 1000)
 
     // для поддержания сессии, токен, кот. мы получили от сервера положить в local storage, чтобы иметь к нему доступ
     localStorage.setItem('token', data.idToken)
@@ -40,7 +40,7 @@ export function auth(email, password, isLogin) {
     // занести локальный id пользователя
     localStorage.setItem('userId', data.localId)
 
-    localStorage.setItem('expirationData', expirationData)
+    localStorage.setItem('expirationDate', expirationDate)
 
     // диспатч нового события с параметром data.idToken чтобы поддерживать текущую сессию
     dispatch(authSuccess(data.idToken))
@@ -64,14 +64,37 @@ export function autoLogout(time) {
 export function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('userId')
-  localStorage.removeItem('expirationData')
+  localStorage.removeItem('expirationDate')
   return {
     type: AUTH_LOGOUT
   }
 }
 
+// функция для поддержки сессии, если остались валидные данные в local storage
 export function autoLogin() {
-  
+  // возвращаем функцию диспатч
+  return dispatch => {
+  // забираем токен из local storage
+    const token = localStorage.getItem('token')
+    // если токена нет, вызываем диспатч с logout, чтоб ывыйти из системы
+    if (!token) {
+      dispatch(logout())
+    }
+    // если токен есть, проверяе валидный ли он
+    else {
+      // преобразуем дату в js-формат
+      const expirationDate = new Date(localStorage.getItem('expirationDate'))
+      // если токен потерял время жизни, expirationDate <= текущей дате, делаем выход из системы
+      if (expirationDate <= new Date()) {
+        dispatch(logout())
+      }
+      // если все корректно
+      else {
+        dispatch(authSuccess(token))
+        dispatch(autoLogout((expirationDate.getTime() - new Date().getTime()) / 1000))
+      }
+    }
+  }
 }
 
 export function authSuccess(token) {
